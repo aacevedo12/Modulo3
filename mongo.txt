@@ -1,0 +1,75 @@
+from pymongo import MongoClient
+
+# Conexión a la base de datos de MongoDB
+cliente = MongoClient('localhost', 27017)
+db = cliente['diccionario']
+coleccion = db['palabras']
+
+def agregar_palabra():
+    palabra = input("Ingresa la palabra: ")
+    # Comprobar si no existe
+    posible_significado = buscar_significado_palabra(palabra)
+    if posible_significado:
+        print(f"La palabra '{palabra}' ya existe")
+    else:
+        significado = input("Ingresa el significado: ")
+        coleccion.insert_one({"palabra": palabra, "significado": significado})
+        print("Palabra agregada")
+
+def editar_palabra():
+    palabra = input("Ingresa la palabra que quieres editar: ")
+    nuevo_significado = input("Ingresa el nuevo significado: ")
+    coleccion.update_one({"palabra": palabra}, {"$set": {"significado": nuevo_significado}})
+    print("Palabra actualizada")
+
+def eliminar_palabra():
+    palabra = input("Ingresa la palabra a eliminar: ")
+    coleccion.delete_one({"palabra": palabra})
+    print("Palabra eliminada")
+
+def ver_listado_palabras():
+    palabras = coleccion.find({}, {"_id": 0, "palabra": 1})
+    print("=== Lista de palabras ===")
+    for palabra in palabras:
+        print(palabra['palabra'])
+
+def buscar_significado_palabra(palabra):
+    resultado = coleccion.find_one({"palabra": palabra}, {"_id": 0, "significado": 1})
+    if resultado:
+        return resultado['significado']
+    else:
+        print(f"Palabra '{palabra}' no encontrada")
+        return None
+
+def principal():
+    menu = """
+a) Agregar nueva palabra
+c) Editar palabra existente
+d) Eliminar palabra existente
+e) Ver listado de palabras
+f) Buscar significado de palabra
+g) Salir
+Elige: """
+    eleccion = ""
+    while eleccion != "g":
+        eleccion = input(menu)
+        if eleccion == "a":
+            agregar_palabra()
+        elif eleccion == "c":
+            editar_palabra()
+        elif eleccion == "d":
+            eliminar_palabra()
+        elif eleccion == "e":
+            ver_listado_palabras()
+        elif eleccion == "f":
+            palabra = input("Ingresa la palabra de la cual quieres saber el significado: ")
+            significado = buscar_significado_palabra(palabra)
+            if significado:
+                print(f"El significado de '{palabra}' es:\n{significado}")
+        elif eleccion == "g":
+            print("Saliendo...")
+        else:
+            print("Opción inválida, intenta de nuevo.")
+
+if __name__ == '__main__':
+    principal()
